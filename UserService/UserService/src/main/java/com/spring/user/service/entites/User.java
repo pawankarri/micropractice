@@ -13,7 +13,6 @@ import java.util.List;
 @Builder
 @Entity
 @Table(name="micro_users")
-@ToString
 public class User {
     @Id
 
