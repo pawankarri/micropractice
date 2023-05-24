@@ -1,5 +1,6 @@
 package com.spring.user.service.service.serviceImpl;
 
+import com.spring.user.service.entites.Hotel;
 import com.spring.user.service.entites.Rating;
 import com.spring.user.service.entites.User;
 import com.spring.user.service.exception.ResourceNotFoundException;
@@ -10,8 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -36,11 +39,32 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUser(String userId) {
-        User user= userRepository.findById(userId).orElseThrow(()->new ResourceNotFoundException("user with given id is not found"));
-       // ArrayList<Rating> forObject=restTemplate.getForObject("http://localhost:8083/ratings/hotels/1fbc850b-b094-43a5-b694-241ddffd1c12", ArrayList.class);
-      ArrayList<Rating> forObject= client.get().uri("http://localhost:8083/ratings/hotels/1fbc850b-b094-43a5-b694-241ddffd1c12").retrieve().bodyToMono(ArrayList.class).block();
-      user.setRatings(forObject);
+        //getting single user
 
+        User user = this.userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("user not found"));
+
+        //getting ratings given by particular user
+        //http://localhost:1432/ratings/get/cd69a47c-dae6-40c8-96c7-ec671b460d03
+
+        Rating[] ratingsOfUser = client.get().uri("http://RATING-SERVICE/ratings/get/" + userId).retrieve().bodyToMono(Rating[].class).block();
+
+        List<Rating> ratings = Arrays.stream(ratingsOfUser).toList();
+       // System.out.println(ratings.toString());
+
+
+        List<Rating> ratingList = ratings.stream().map(rating -> {
+            Hotel hotel = client.get()
+                    .uri("http://HOTEL-SERVICE/hotels/" + rating.getHotelId())
+                    .retrieve()
+                    .bodyToMono(Hotel.class)
+                    .block();
+            rating.setHotel(hotel)
+            ;
+            return rating;
+        }).collect(Collectors.toList());
+
+        user.setRatings(ratingList);
         return user;
+
     }
 }

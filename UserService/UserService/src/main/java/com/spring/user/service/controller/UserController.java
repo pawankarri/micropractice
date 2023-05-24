@@ -4,6 +4,7 @@ import com.spring.user.service.entites.User;
 import com.spring.user.service.service.UserService;
 import com.spring.user.service.service.serviceImpl.UserServiceImpl;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,20 +29,24 @@ public class UserController {
 User user1=this.userServiceImpl.saveUser(user);
 return ResponseEntity.status(HttpStatus.CREATED).body(user1);
     }
+    int retryCount=1;
     @GetMapping("/{userId}")
-    @CircuitBreaker(name="ratingBreaker",fallbackMethod = "ratingFallback")
+   //@CircuitBreaker(name="ratingBreaker",fallbackMethod = "ratingFallback")
+    @Retry(name = "ratingBreaker",fallbackMethod = "ratingFallback")
     public ResponseEntity<User> getSingleUser(@PathVariable String userId)
     {
+        System.out.println(retryCount);
+        retryCount++;
         User user=userServiceImpl.getUser(userId);
         return ResponseEntity.ok(user);
     }
 
+
     public ResponseEntity<User> ratingFallback(String userId,Exception ex)
     {
-
        User user= User.builder()
                 .email("dummy@email.com").name("Dummy")
-                .about("this user is created dummy some service is dowm")
+                .about("this user is created dummy some service is down")
                 .userId("141234")
                 .build();
       return new ResponseEntity<>(user,HttpStatus.OK);

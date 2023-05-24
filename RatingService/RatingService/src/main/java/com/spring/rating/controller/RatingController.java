@@ -25,7 +25,7 @@ return ResponseEntity.status(HttpStatus.CREATED).body(ratingService.create(ratin
     {
         return ResponseEntity.ok(ratingService.getRatings());
     }
-    @GetMapping("/hotels/{userId}")
+    @GetMapping("/get/{userId}")
     public  ResponseEntity<List<Rating>> getRatingByUserId(@PathVariable("userId") String userId)
     {
         return ResponseEntity.ok(ratingService.getRatingByUserId(userId));
